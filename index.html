@@ -284,11 +284,36 @@ lines.forEach(line=>{
 let nums=line.match(/\d+/g);
 if(!nums) return;
 
-let card=nums.find(n=>n.length>=13 && n.length<=16);
-let mm=nums.find(n=>parseInt(n)>=1 && parseInt(n)<=12);
-let yy=nums.find(n=>n.length==2 || n.length==4);
-let cvv=nums.find(n=>n.length==3 || n.length==4);
+// 🔥 CARD (13-16 digit only)
+let cardIndex = nums.findIndex(n => n.length>=13 && n.length<=16);
+if(cardIndex === -1) return;
 
+let card = nums[cardIndex];
+
+// 🔥 SAFE POSITION BASED EXTRACTION
+let mm = nums[cardIndex+1];
+let yy = nums[cardIndex+2];
+let cvv = nums[cardIndex+3];
+
+// 🔥 FALLBACK (if position fail)
+if(!mm || !/^(0?[1-9]|1[0-2])$/.test(mm)){
+    mm = nums.find(n => /^(0?[1-9]|1[0-2])$/.test(n));
+}
+
+if(!yy || !/^\d{2}$/.test(yy)){
+    let y2 = nums.find(n => /^\d{2}$/.test(n));
+    if(y2) yy = y2;
+    else{
+        let y4 = nums.find(n => /^\d{4}$/.test(n));
+        if(y4) yy = y4.slice(-2);
+    }
+}
+
+if(!cvv || !/^\d{3}$/.test(cvv)){
+    cvv = nums.find(n => /^\d{3}$/.test(n));
+}
+
+// 🔥 FINAL VALIDATION
 if(card && mm && yy && cvv){
 
 valid++;
@@ -311,8 +336,12 @@ output.appendChild(div);
 
 });
 
+// 🔥 REMOVE DUPLICATE
+finalCards = [...new Set(finalCards)];
+
+// 🔥 COUNTER UPDATE
 document.getElementById("counter").innerText=
-`Total: ${total} | Valid: ${valid} | Invalid: ${total-valid}`;
+`Total: ${total} | Valid: ${finalCards.length} | Invalid: ${total-finalCards.length}`;
 
 }
 
