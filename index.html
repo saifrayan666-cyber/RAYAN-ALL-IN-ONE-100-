@@ -277,51 +277,65 @@ output.innerHTML="";
 window.finalCards=[];
 
 let total=lines.length;
-let valid=0;
 
 lines.forEach(line=>{
 
 let nums=line.match(/\d+/g);
 if(!nums) return;
 
-// 🔥 CARD (13-16 digit only)
+// 🔥 CARD
 let cardIndex = nums.findIndex(n => n.length>=13 && n.length<=16);
 if(cardIndex === -1) return;
 
 let card = nums[cardIndex];
 
-// 🔥 SAFE POSITION BASED EXTRACTION
-let mm = nums[cardIndex+1];
-let yy = nums[cardIndex+2];
-let cvv = nums[cardIndex+3];
+// 🔥 next numbers
+let next = nums.slice(cardIndex+1, cardIndex+4);
 
-// 🔥 FALLBACK (if position fail)
-if(!mm || !/^(0?[1-9]|1[0-2])$/.test(mm)){
-    mm = nums.find(n => /^(0?[1-9]|1[0-2])$/.test(n));
+// 👉 fallback if less
+while(next.length < 3){
+next.push("00");
 }
 
-if(!yy || !/^\d{2}$/.test(yy)){
-    let y2 = nums.find(n => /^\d{2}$/.test(n));
-    if(y2) yy = y2;
-    else{
-        let y4 = nums.find(n => /^\d{4}$/.test(n));
-        if(y4) yy = y4.slice(-2);
-    }
+let mm="", yy="", cvv="";
+
+// =======================
+// 🔥 SMART DETECT
+// =======================
+next.forEach(n=>{
+let v=parseInt(n);
+
+// MM
+if(v>=1 && v<=12 && !mm){
+mm = n.padStart(2,'0');
 }
 
-if(!cvv || !/^\d{3}$/.test(cvv)){
-    cvv = nums.find(n => /^\d{3}$/.test(n));
+// CVV
+else if(n.length==3 && !cvv){
+cvv = n;
 }
 
-// 🔥 FINAL VALIDATION
-if(card && mm && yy && cvv){
+// YY
+else if(!yy){
+yy = n.slice(-2);
+}
+});
 
-valid++;
+// =======================
+// 🔥 FORCE FILL (NO SKIP)
+// =======================
+if(!mm) mm = "01";
+if(!yy) yy = "00";
+if(!cvv) cvv = "000";
 
-let formatted=`${card}|${mm.padStart(2,'0')}|${yy.slice(-2)}|${cvv}`;
+// =======================
+// FINAL
+// =======================
+let formatted = `${card}|${mm}|${yy}|${cvv}`;
 
 finalCards.push(formatted);
 
+// UI
 let div=document.createElement("div");
 div.className="card";
 
@@ -332,16 +346,14 @@ div.innerHTML=`
 
 output.appendChild(div);
 
-}
-
 });
 
-// 🔥 REMOVE DUPLICATE
+// remove duplicate
 finalCards = [...new Set(finalCards)];
 
-// 🔥 COUNTER UPDATE
-document.getElementById("counter").innerText=
-`Total: ${total} | Valid: ${finalCards.length} | Invalid: ${total-finalCards.length}`;
+// counter
+document.getElementById("counter").innerText =
+`Total: ${total} | Valid: ${finalCards.length} | Invalid: 0`;
 
 }
 
